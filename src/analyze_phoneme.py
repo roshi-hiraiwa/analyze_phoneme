@@ -3,6 +3,7 @@ import glob
 import numpy as np
 import pandas as pd
 import cv2
+from PIL import Image, ImageDraw, ImageFont
 
 
 # ==========================================
@@ -240,6 +241,20 @@ def match_timestamps_with_phonemes(timestamp_results):
             canvas = np.ones((h + timeline_height, w, 3), dtype=np.uint8) * 255
             canvas[0:h, 0:w] = vis_img
 
+            # 赤い領域を緑色で描画
+            for tr in time_ranges:
+                red_start = tr["start"]
+                red_end = tr["end"]
+
+                x_start = int((red_start / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
+                x_end = int((red_end / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
+
+                # 赤い領域を赤色で描画
+                cv2.rectangle(
+                    canvas, (x_start, h + 10), (x_end, h + 40), (0, 0, 255), -1
+                )
+                cv2.rectangle(canvas, (x_start, h + 10), (x_end, h + 40), (0, 0, 0), 1)
+
             # タイムスタンプの区間を描画
             for i in range(len(df_ts) - 1):
                 char = df_ts.iloc[i]["char"]
@@ -255,12 +270,9 @@ def match_timestamps_with_phonemes(timestamp_results):
 
                 # タイムスタンプ区間を青色で描画
                 cv2.rectangle(
-                    canvas, (x_start, h + 10), (x_end, h + 40), (255, 0, 0), -1
+                    canvas, (x_start, h + 50), (x_end, h + 80), (255, 0, 0), -1
                 )
-                cv2.rectangle(canvas, (x_start, h + 10), (x_end, h + 40), (0, 0, 0), 1)
-
-                # 文字を描画（PIL使用で日本語対応）
-                from PIL import Image, ImageDraw, ImageFont
+                cv2.rectangle(canvas, (x_start, h + 50), (x_end, h + 80), (0, 0, 0), 1)
 
                 # canvasをPIL Imageに変換
                 pil_img = Image.fromarray(cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB))
@@ -276,54 +288,28 @@ def match_timestamps_with_phonemes(timestamp_results):
                         font = ImageFont.load_default()
 
                 # 文字を描画
-                draw.text((x_start + 2, h + 15), char, font=font, fill=(255, 255, 255))
+                draw.text((x_start + 2, h + 55), char, font=font, fill=(255, 255, 255))
 
                 # PIL ImageをOpenCV形式に戻す
                 canvas = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-            # 赤い領域を緑色で描画
-            for tr in time_ranges:
-                red_start = tr["start"]
-                red_end = tr["end"]
-
-                x_start = int((red_start / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
-                x_end = int((red_end / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
-
-                # 赤い領域を緑色の半透明で描画
-                cv2.rectangle(
-                    canvas, (x_start, h + 50), (x_end, h + 80), (0, 255, 0), -1
-                )
-                cv2.rectangle(canvas, (x_start, h + 50), (x_end, h + 80), (0, 0, 0), 1)
-
-                # 時間を表示
-                text = f"{red_start:.3f}-{red_end:.3f}"
-                cv2.putText(
-                    canvas,
-                    text,
-                    (x_start + 2, h + 70),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,
-                    (0, 0, 0),
-                    1,
-                )
-
             # 凡例を追加
             cv2.putText(
                 canvas,
-                "Blue: Timestamp",
+                "Red: Red Region",
                 (5, h + 95),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                (255, 0, 0),
+                (0, 0, 255),
                 1,
             )
             cv2.putText(
                 canvas,
-                "Green: Red Region",
+                "Blue: Timestamp",
                 (150, h + 95),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                (0, 255, 0),
+                (255, 0, 0),
                 1,
             )
 
