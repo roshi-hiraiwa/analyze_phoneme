@@ -235,13 +235,13 @@ def match_timestamps_with_phonemes(timestamp_results):
             vis_img = None
 
         if vis_img is not None:
-            # 画像の高さを拡張してタイムライン表示用のスペースを追加
+            # 画像の高さを拡張してタイムスタンプ表示用のスペースを追加
             timeline_height = 100
             h, w, _ = vis_img.shape
             canvas = np.ones((h + timeline_height, w, 3), dtype=np.uint8) * 255
             canvas[0:h, 0:w] = vis_img
 
-            # 赤い領域を緑色で描画
+            # 赤い領域を赤色で描画
             for tr in time_ranges:
                 red_start = tr["start"]
                 red_end = tr["end"]
@@ -249,7 +249,7 @@ def match_timestamps_with_phonemes(timestamp_results):
                 x_start = int((red_start / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
                 x_end = int((red_end / AUDIO_DURATION_SEC) * HEATMAP_WIDTH_PX)
 
-                # 赤い領域を赤色で描画
+                # 赤い領域を赤色の半透明で描画
                 cv2.rectangle(
                     canvas, (x_start, h + 10), (x_end, h + 40), (0, 0, 255), -1
                 )
@@ -384,26 +384,16 @@ if __name__ == "__main__":
     # 画像を切り取って保存
     print(f"\n画像処理を開始...")
     processed = crop_and_save_images(df_tp_tn)
-    print(f"完了: {processed}枚の画像を {HEATMAP_DIR} に保存しました")
+    print(f"{processed}枚の画像を保存: {HEATMAP_DIR} ")
 
     # 赤い領域の時間を検出
-    print(f"\n赤色領域の時間検出を開始...")
+    print(f"赤色領域の時間検出を開始...")
     timestamp_results = detect_red_timestamps(df_tp_tn)
 
     # 赤い領域と音声の文字を照合
-    print(f"\n文字照合を開始...")
+    print(f"文字照合を開始...")
     matched_results = match_timestamps_with_phonemes(timestamp_results)
     print(f"比較画像を保存: {VALIDATION_DIR}")
-
-    print(f"\n照合結果:")
+    print("\n[照合結果]")
     for result in matched_results:
         print(f"{result['type']} - {result['name']}: {result['matched_chars']}")
-
-    # 結果をCSVに保存
-    if matched_results:
-        df_results = pd.DataFrame(matched_results)
-        output_csv = os.path.join(PROJECT_ROOT, "target", "phoneme_analysis.csv")
-        df_results[["name", "type", "matched_chars", "range_str"]].to_csv(
-            output_csv, index=False, encoding="shift_jis"
-        )
-        print(f"\n結果を保存: {output_csv}")
