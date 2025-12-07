@@ -16,7 +16,7 @@
    - タイムスタンプCSVをShift_JIS/UTF-8で保存
 
 ### 2. 学習モデル構築（Python）
-CNN学習・評価(`make_cnn_classification_loo.py`)<br>
+- CNN学習・評価(`make_cnn_classification_loo.py`)<br>
    - Leave-One-Out交差検証（LOO）で学習
    - エポック数：200、バッチサイズ：30
    - Grad-CAMを用いて判断根拠となるヒートマップを生成
